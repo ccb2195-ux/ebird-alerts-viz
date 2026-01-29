@@ -1,5 +1,8 @@
 # eBird Alerts Visualization
 
+This is a Homework project for Data Studio 2026 at Columbia Graduate School of Journalism built with Claude Code Sonnett in order to test its ability to scrape a site with playwright and deploy a visulization which updates regularly. The test was successful. Everything from here forward was written for the README by Claude:
+
+
 An automated bird watching visualization tool that scrapes eBird alert data and displays notable bird sightings on an interactive map.
 
 ## Features
