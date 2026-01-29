@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Interactive map showing notable bird sightings from eBird alerts">
+    <title>eBird Alert Viewer - Notable Bird Sightings</title>
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+          crossorigin=""/>
+
+    <!-- Marker Cluster CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/styles.css">
+
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐦</text></svg>">
+</head>
+<body>
+    <div id="header">
+        <div class="header-content">
+            <h1>🐦 Notable Bird Sightings</h1>
+            <p class="subtitle">Real-time eBird alerts on an interactive map</p>
+            <div id="metadata">
+                <span id="last-updated" class="metadata-item">
+                    <strong>Last updated:</strong> Loading...
+                </span>
+                <span id="sighting-count" class="metadata-item">
+                    <strong>Sightings:</strong> Loading...
+                </span>
+                <span id="location-name" class="metadata-item">
+                    <strong>Location:</strong> Loading...
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <div id="controls">
+        <div class="control-group">
+            <label for="rarity-filter">Filter by Rarity:</label>
+            <select id="rarity-filter">
+                <option value="all">All Birds</option>
+                <option value="notable">Notable</option>
+                <option value="rare">Rare</option>
+                <option value="review">Review Species</option>
+            </select>
+        </div>
+        <button id="refresh-btn" class="btn-refresh" title="Refresh data">
+            🔄 Refresh
+        </button>
+    </div>
+
+    <div id="map-container">
+        <div id="map"></div>
+        <div id="loading" class="loading-overlay">
+            <div class="spinner"></div>
+            <p>Loading bird sightings...</p>
+        </div>
+    </div>
+
+    <div id="error-message" class="error-banner" style="display: none;">
+        <span class="error-icon">⚠️</span>
+        <span id="error-text"></span>
+        <button id="error-close" class="error-close">×</button>
+    </div>
+
+    <div id="info-panel" class="info-panel">
+        <button id="info-toggle" class="info-toggle">ℹ️</button>
+        <div id="info-content" class="info-content" style="display: none;">
+            <h3>About This Map</h3>
+            <p>
+                This map displays notable and rare bird sightings from eBird alerts.
+                Data is automatically updated twice daily at 6 AM and 6 PM UTC.
+            </p>
+            <p>
+                <strong>Legend:</strong><br>
+                <span class="legend-item">
+                    <span class="legend-marker" style="background-color: #FFA500;"></span> Notable
+                </span>
+                <span class="legend-item">
+                    <span class="legend-marker" style="background-color: #FF0000;"></span> Rare
+                </span>
+                <span class="legend-item">
+                    <span class="legend-marker" style="background-color: #800080;"></span> Review Species
+                </span>
+            </p>
+            <p class="credits">
+                <strong>Credits:</strong><br>
+                Data: <a href="https://ebird.org" target="_blank">eBird</a><br>
+                Maps: <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors<br>
+                <em>Not affiliated with eBird or Cornell Lab of Ornithology</em>
+            </p>
+        </div>
+    </div>
+
+    <footer id="footer">
+        <p>
+            Built with ❤️ for bird watchers |
+            <a href="https://github.com" target="_blank">View on GitHub</a>
+        </p>
+    </footer>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+            crossorigin=""></script>
+
+    <!-- Marker Cluster JS -->
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+
+    <!-- Custom JS -->
+    <script src="js/config.js"></script>
+    <script src="js/map.js"></script>
+</body>
+</html>

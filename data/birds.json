@@ -1,0 +1,82 @@
+{
+  "metadata": {
+    "location_code": "SN35466",
+    "location_name": "eBird Alert Location (Sample Data)",
+    "last_updated": "2026-01-29T15:30:00Z",
+    "scrape_status": "success",
+    "total_sightings": 5,
+    "error_message": null
+  },
+  "sightings": [
+    {
+      "id": "a1b2c3d4e5f6",
+      "species_common_name": "African Grey Parrot",
+      "species_scientific_name": "Psittacus erithacus",
+      "location": "Djoudj National Bird Sanctuary",
+      "latitude": 16.5,
+      "longitude": -16.2,
+      "date": "2026-01-29",
+      "time": "08:30",
+      "count": "3",
+      "observer": "John Birder",
+      "rarity_level": "notable",
+      "checklist_url": "https://ebird.org/checklist/example1"
+    },
+    {
+      "id": "f6e5d4c3b2a1",
+      "species_common_name": "Pink-backed Pelican",
+      "species_scientific_name": "Pelecanus rufescens",
+      "location": "Lac de Guiers",
+      "latitude": 16.1,
+      "longitude": -15.8,
+      "date": "2026-01-29",
+      "time": "10:15",
+      "count": "12",
+      "observer": "Jane Observer",
+      "rarity_level": "notable",
+      "checklist_url": "https://ebird.org/checklist/example2"
+    },
+    {
+      "id": "1a2b3c4d5e6f",
+      "species_common_name": "Egyptian Plover",
+      "species_scientific_name": "Pluvianus aegyptius",
+      "location": "Senegal River Delta",
+      "latitude": 16.3,
+      "longitude": -16.0,
+      "date": "2026-01-28",
+      "time": "14:45",
+      "count": "2",
+      "observer": "Bob Watcher",
+      "rarity_level": "rare",
+      "checklist_url": "https://ebird.org/checklist/example3"
+    },
+    {
+      "id": "7g8h9i0j1k2l",
+      "species_common_name": "Greater Flamingo",
+      "species_scientific_name": "Phoenicopterus roseus",
+      "location": "Technopole Wetlands",
+      "latitude": 16.4,
+      "longitude": -15.9,
+      "date": "2026-01-28",
+      "time": "16:00",
+      "count": "150",
+      "observer": "Alice Spotter",
+      "rarity_level": "notable",
+      "checklist_url": "https://ebird.org/checklist/example4"
+    },
+    {
+      "id": "m3n4o5p6q7r8",
+      "species_common_name": "Abyssinian Roller",
+      "species_scientific_name": "Coracias abyssinicus",
+      "location": "Parc National du Niokolo-Koba",
+      "latitude": 16.6,
+      "longitude": -16.1,
+      "date": "2026-01-27",
+      "time": "09:20",
+      "count": "1",
+      "observer": "Charlie Birding",
+      "rarity_level": "rare",
+      "checklist_url": "https://ebird.org/checklist/example5"
+    }
+  ]
+}

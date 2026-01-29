@@ -1,0 +1,94 @@
+name: Scrape eBird and Update Map
+
+on:
+  schedule:
+    # Run at 6 AM UTC (1 AM EST / 10 PM PST previous day)
+    - cron: '0 6 * * *'
+    # Run at 6 PM UTC (1 PM EST / 10 AM PST)
+    - cron: '0 18 * * *'
+
+  # Allow manual triggering for testing
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  scrape-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch full history to prevent conflicts
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install Python dependencies
+        run: |
+          cd scripts
+          pip install -r requirements.txt
+
+      - name: Install Playwright browsers
+        run: |
+          playwright install --with-deps chromium
+
+      - name: Validate secrets
+        run: |
+          if [ -z "${{ secrets.EBIRD_USERNAME }}" ]; then
+            echo "::error::EBIRD_USERNAME secret not set"
+            exit 1
+          fi
+          if [ -z "${{ secrets.EBIRD_PASSWORD }}" ]; then
+            echo "::error::EBIRD_PASSWORD secret not set"
+            exit 1
+          fi
+          echo "Secrets validated successfully"
+
+      - name: Run eBird scraper
+        env:
+          EBIRD_USERNAME: ${{ secrets.EBIRD_USERNAME }}
+          EBIRD_PASSWORD: ${{ secrets.EBIRD_PASSWORD }}
+        run: |
+          cd scripts
+          python scrape_ebird.py
+
+      - name: Check scraper output
+        run: |
+          if [ -f data/birds.json ]; then
+            echo "✅ birds.json created successfully"
+            cat data/birds.json | head -20
+          else
+            echo "::error::birds.json not found"
+            exit 1
+          fi
+
+      - name: Check for changes
+        id: check_changes
+        run: |
+          git diff --quiet data/birds.json || echo "changed=true" >> $GITHUB_OUTPUT
+
+      - name: Commit and push changes
+        if: steps.check_changes.outputs.changed == 'true'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add data/birds.json
+          git commit -m "Update bird data - $(date -u +'%Y-%m-%d %H:%M UTC')"
+          git push
+
+      - name: No changes detected
+        if: steps.check_changes.outputs.changed != 'true'
+        run: |
+          echo "ℹ️ No changes detected in bird data"
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "::error::Scraping workflow failed. Check logs for details."
+          echo "Check the scraper output and debug screenshot if available"
