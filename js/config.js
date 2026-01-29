@@ -3,10 +3,10 @@
  */
 
 const CONFIG = {
-    // Default map center and zoom
+    // Default map center and zoom (New York City)
     // Will be overridden by data bounds if sightings are available
-    defaultCenter: [40.0, -75.0],
-    defaultZoom: 8,
+    defaultCenter: [40.7128, -74.0060],
+    defaultZoom: 10,
 
     // Tile layer configuration
     tileLayer: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
@@ -21,6 +21,7 @@ const CONFIG = {
         'notable': '#FFA500',     // Orange
         'rare': '#FF0000',        // Red
         'review': '#800080',      // Purple
+        'recent': '#228B22',      // Forest green
         'default': '#3388ff'      // Default blue
     },
 

@@ -25,7 +25,7 @@
     <div id="header">
         <div class="header-content">
             <h1>🐦 Notable Bird Sightings</h1>
-            <p class="subtitle">Real-time eBird alerts on an interactive map</p>
+            <p class="subtitle">Recent and notable eBird sightings updated hourly</p>
             <div id="metadata">
                 <span id="last-updated" class="metadata-item">
                     <strong>Last updated:</strong> Loading...
@@ -45,6 +45,7 @@
             <label for="rarity-filter">Filter by Rarity:</label>
             <select id="rarity-filter">
                 <option value="all">All Birds</option>
+                <option value="recent">Recent</option>
                 <option value="notable">Notable</option>
                 <option value="rare">Rare</option>
                 <option value="review">Review Species</option>
@@ -74,11 +75,14 @@
         <div id="info-content" class="info-content" style="display: none;">
             <h3>About This Map</h3>
             <p>
-                This map displays notable and rare bird sightings from eBird alerts.
-                Data is automatically updated twice daily at 6 AM and 6 PM UTC.
+                This map displays recent bird sightings as well as notable and rare birds from eBird alerts.
+                Data is automatically updated every hour.
             </p>
             <p>
                 <strong>Legend:</strong><br>
+                <span class="legend-item">
+                    <span class="legend-marker" style="background-color: #228B22;"></span> Recent
+                </span>
                 <span class="legend-item">
                     <span class="legend-marker" style="background-color: #FFA500;"></span> Notable
                 </span>

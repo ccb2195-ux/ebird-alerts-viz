@@ -21,7 +21,12 @@ logger = logging.getLogger(__name__)
 
 # Configuration
 EBIRD_ALERT_URL = "https://ebird.org/alert/summary?sid=SN35466"
+# Recent observations page - pulls all recent sightings, not just notable/rare
+# Change the region code (e.g., US-PA, GB-ENG, SN) to match your area of interest
+EBIRD_RECENT_URL = "https://ebird.org/region/US-NY/recent"
 OUTPUT_FILE = os.path.join(os.path.dirname(__file__), "..", "data", "birds.json")
+# Set to True to fetch recent observations in addition to alerts
+FETCH_RECENT_OBSERVATIONS = True
 
 
 async def login(page):
@@ -210,6 +215,7 @@ async def scrape_alerts(page, max_retries=3):
             for card in observation_cards:
                 sighting = await extract_sighting_data(card)
                 if sighting and validate_sighting(sighting):
+                    sighting["source"] = "alert"
                     sightings.append(sighting)
                     logger.info(f"Extracted: {sighting['species_common_name']} at {sighting['location']}")
 
@@ -224,12 +230,152 @@ async def scrape_alerts(page, max_retries=3):
     return []
 
 
+async def scrape_recent_observations(page, max_retries=3):
+    """Scrape recent observations from eBird region page"""
+    for attempt in range(max_retries):
+        try:
+            logger.info(f"Navigating to {EBIRD_RECENT_URL} (attempt {attempt + 1})")
+
+            await page.goto(EBIRD_RECENT_URL, wait_until="domcontentloaded", timeout=30000)
+
+            # Check if redirected to login
+            if "login" in page.url.lower() or "signin" in page.url.lower():
+                logger.info("Redirected to login page")
+                login_success = await login(page)
+                if not login_success:
+                    raise Exception("Login failed")
+                await page.goto(EBIRD_RECENT_URL, wait_until="domcontentloaded", timeout=30000)
+
+            # Wait for page to load
+            await page.wait_for_load_state("networkidle", timeout=30000)
+
+            # Wait for observation rows to appear
+            try:
+                await page.wait_for_selector(
+                    ".Observation, .observation, [class*='observation'], tr[data-species], .ResultsStats-row",
+                    timeout=15000
+                )
+            except:
+                logger.warning("Could not find recent observation elements")
+                await page.screenshot(path="debug_recent_screenshot.png")
+                logger.info("Screenshot saved as debug_recent_screenshot.png")
+                return []
+
+            sightings = []
+
+            # Try to find observation rows - eBird recent pages often use table rows
+            observation_rows = await page.query_selector_all(
+                ".Observation, .observation, [class*='observation'], tr[data-species], .ResultsStats-row, .Observation-species"
+            )
+
+            logger.info(f"Found {len(observation_rows)} recent observation rows")
+
+            for row in observation_rows:
+                sighting = await extract_recent_observation_data(row)
+                if sighting and validate_sighting(sighting):
+                    sighting["source"] = "recent"
+                    sightings.append(sighting)
+                    logger.info(f"Extracted recent: {sighting['species_common_name']} at {sighting['location']}")
+
+            return sightings
+
+        except Exception as e:
+            logger.error(f"Recent observations scraping attempt {attempt + 1} failed: {e}")
+            if attempt == max_retries - 1:
+                raise
+            await asyncio.sleep(5)
+
+    return []
+
+
+async def extract_recent_observation_data(row):
+    """Extract data from a recent observation row"""
+    try:
+        sighting = {}
+
+        # Species name - try multiple selectors
+        species_elem = await row.query_selector(
+            ".Heading-main, .species-name, .Observation-species-name, a[href*='/species/'], h3, h4, td:first-child a"
+        )
+        sighting["species_common_name"] = await species_elem.inner_text() if species_elem else "Unknown"
+        sighting["species_common_name"] = sighting["species_common_name"].strip()
+
+        # Scientific name
+        scientific_elem = await row.query_selector("em, .scientific-name, .Observation-species-scientific")
+        sighting["species_scientific_name"] = await scientific_elem.inner_text() if scientific_elem else ""
+
+        # Location
+        location_elem = await row.query_selector(
+            ".Observation-location, .location, [class*='location'], a[href*='/hotspot/'], a[href*='/region/']"
+        )
+        sighting["location"] = await location_elem.inner_text() if location_elem else "Unknown"
+        sighting["location"] = sighting["location"].strip()
+
+        # Date
+        date_elem = await row.query_selector(".Observation-meta-date, .date, [class*='date'], time")
+        date_text = await date_elem.inner_text() if date_elem else ""
+        sighting["date"] = date_text.strip()
+
+        # Time
+        time_elem = await row.query_selector(".time, [class*='time']")
+        sighting["time"] = await time_elem.inner_text() if time_elem else ""
+
+        # Observer
+        observer_elem = await row.query_selector(".Observation-meta-user, .observer, [class*='user'], a[href*='/profile/']")
+        sighting["observer"] = await observer_elem.inner_text() if observer_elem else "Unknown"
+
+        # Count
+        count_elem = await row.query_selector(".count, [class*='count'], .Observation-numberObserved")
+        sighting["count"] = await count_elem.inner_text() if count_elem else "1"
+
+        # For recent observations, default rarity to "recent" unless marked otherwise
+        rarity_elem = await row.query_selector(".rare, .notable, .review, [class*='rarity'], [class*='Rare']")
+        if rarity_elem:
+            sighting["rarity_level"] = await rarity_elem.inner_text()
+            sighting["rarity_level"] = sighting["rarity_level"].lower().strip()
+        else:
+            sighting["rarity_level"] = "recent"
+
+        # Checklist URL
+        checklist_link = await row.query_selector("a[href*='checklist'], a[href*='/sub/']")
+        if checklist_link:
+            href = await checklist_link.get_attribute("href")
+            sighting["checklist_url"] = f"https://ebird.org{href}" if href and not href.startswith("http") else href
+        else:
+            sighting["checklist_url"] = ""
+
+        # Coordinates
+        lat_elem = await row.get_attribute("data-lat")
+        lng_elem = await row.get_attribute("data-lng")
+        sighting["latitude"] = float(lat_elem) if lat_elem else None
+        sighting["longitude"] = float(lng_elem) if lng_elem else None
+
+        # Try to get coordinates from map link if not in data attributes
+        if sighting["latitude"] is None:
+            map_link = await row.query_selector("a[href*='google.com/maps'], a[href*='maps.google']")
+            if map_link:
+                href = await map_link.get_attribute("href")
+                coords = parse_coordinates_from_url(href)
+                if coords:
+                    sighting["latitude"], sighting["longitude"] = coords
+
+        # Generate unique ID
+        id_string = f"{sighting['species_common_name']}{sighting['location']}{sighting['date']}"
+        sighting["id"] = hashlib.md5(id_string.encode()).hexdigest()[:12]
+
+        return sighting
+
+    except Exception as e:
+        logger.warning(f"Failed to extract recent observation data: {e}")
+        return None
+
+
 def create_output_json(sightings, status="success", error_message=None):
     """Create final JSON structure"""
     return {
         "metadata": {
-            "location_code": "SN35466",
-            "location_name": "eBird Alert Location",
+            "location_code": "US-NY",
+            "location_name": "New York",
             "last_updated": datetime.now(timezone.utc).isoformat(),
             "scrape_status": status,
             "total_sightings": len(sightings),
@@ -237,6 +383,17 @@ def create_output_json(sightings, status="success", error_message=None):
         },
         "sightings": sightings
     }
+
+
+def deduplicate_sightings(sightings):
+    """Remove duplicate sightings based on ID"""
+    seen_ids = set()
+    unique_sightings = []
+    for sighting in sightings:
+        if sighting["id"] not in seen_ids:
+            seen_ids.add(sighting["id"])
+            unique_sightings.append(sighting)
+    return unique_sightings
 
 
 async def main():
@@ -261,11 +418,28 @@ async def main():
         page = await context.new_page()
 
         try:
-            sightings = await scrape_alerts(page)
+            all_sightings = []
 
-            if sightings:
-                output = create_output_json(sightings, status="success")
-                logger.info(f"Successfully scraped {len(sightings)} sightings")
+            # Scrape alert data (notable/rare birds)
+            logger.info("Scraping alert data...")
+            alert_sightings = await scrape_alerts(page)
+            all_sightings.extend(alert_sightings)
+            logger.info(f"Got {len(alert_sightings)} sightings from alerts")
+
+            # Scrape recent observations if enabled
+            if FETCH_RECENT_OBSERVATIONS:
+                logger.info("Scraping recent observations...")
+                recent_sightings = await scrape_recent_observations(page)
+                all_sightings.extend(recent_sightings)
+                logger.info(f"Got {len(recent_sightings)} recent observations")
+
+            # Remove duplicates
+            all_sightings = deduplicate_sightings(all_sightings)
+            logger.info(f"Total unique sightings: {len(all_sightings)}")
+
+            if all_sightings:
+                output = create_output_json(all_sightings, status="success")
+                logger.info(f"Successfully scraped {len(all_sightings)} sightings")
             else:
                 output = create_output_json([], status="warning", error_message="No sightings found")
                 logger.warning("No valid sightings found")
