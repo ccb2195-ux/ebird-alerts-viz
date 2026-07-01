@@ -2,10 +2,10 @@
   "metadata": {
     "location_code": "US-NY",
     "location_name": "New York",
-    "last_updated": "2026-06-30T22:22:14.129886+00:00",
-    "scrape_status": "warning",
+    "last_updated": "2026-07-01T00:15:05.921571+00:00",
+    "scrape_status": "error",
     "total_sightings": 0,
-    "error_message": "No sightings found"
+    "error_message": "Timeout 30000ms exceeded."
   },
   "sightings": []
 }
