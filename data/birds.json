@@ -2,7 +2,7 @@
   "metadata": {
     "location_code": "US-NY",
     "location_name": "New York",
-    "last_updated": "2026-11-13T15:14:05.032217+00:00",
+    "last_updated": "2026-11-13T21:51:57.800458+00:00",
     "scrape_status": "error",
     "total_sightings": 0,
     "error_message": "net::ERR_CERT_AUTHORITY_INVALID at https://ebird.org/alert/summary?sid=SN35466"
